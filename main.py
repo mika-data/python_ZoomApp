@@ -1,19 +1,21 @@
 import wx
 import wx.lib.inspection
-from PIL import Image
-from MyZoomAppControllerFrame import MyZoomAppControllerFrame
 from MyZoomAppFrame import MyZoomAppFrame
-
-
-
+from MyZoomAppControllerFrame import MyZoomAppControllerFrame
+from config import Config
 
 def main():
     app = wx.App()
-
-    frame = MyZoomAppFrame(None, -1, title = 'Zoom into Images')
+    
+    config = Config()
+    frame = MyZoomAppFrame(None, -1, 'Zoomed Image Frame', config)
+    controller_frame = MyZoomAppControllerFrame(None, -1, 'Birds-eye View Frame',
+                                                 pos=(10,10), size=(460, 300),
+                                                 zoom_frame=frame, config=config)
+    
     frame.Show()
-    frameController = MyZoomAppControllerFrame(frame, -1 , title = "ZoomController")
-    frameController.Show()
+    controller_frame.Show()
+    
     wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
 
