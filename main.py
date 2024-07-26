@@ -1,20 +1,29 @@
 import wx
 import wx.lib.inspection
-from MyZoomAppFrame import MyZoomAppFrame
-from MyZoomAppControllerFrame import MyZoomAppControllerFrame
 from config import Config
+from model import ImageModel
+from zoom_controller import ZoomController
+from zoom_view import ZoomView
+from birds_eye_view import BirdsEyeView
 
 def main():
     app = wx.App()
-    
     config = Config()
-    frame = MyZoomAppFrame(None, -1, 'Zoomed Image Frame', config)
-    controller_frame = MyZoomAppControllerFrame(None, -1, 'Birds-eye View Frame',
-                                                 pos=(10,10), size=(460, 300),
-                                                 zoom_frame=frame, config=config)
+    model = ImageModel(config.image_path)
     
-    frame.Show()
-    controller_frame.Show()
+    zoom_view = ZoomView(None, -1, 'Zoomed Image Frame', None)
+    birds_eye_view = BirdsEyeView(None, -1, 'Birds-eye View Frame', None)
+    
+    controller = ZoomController(model, zoom_view, birds_eye_view)
+    zoom_view.controller = controller
+    birds_eye_view.controller = controller
+    
+    zoom_view.Show()
+    birds_eye_view.Show()
+
+    # Display the initial image before zooming
+    zoom_view.update_image(zoom_view.controller.model.get_original_image())  
+    birds_eye_view.update_image()
     
     wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
