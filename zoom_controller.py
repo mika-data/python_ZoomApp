@@ -16,8 +16,6 @@ class ZoomController:
         if self.model.scale < Config.MAX_ZOOM_LEVEL:
             self._animate_zoom(1 + Config.zoom_factor, mouse_pos)
         else:
-            if Config.DEBUG:
-                print("looking for best match")
             self.find_best_match()
 
     def zoom_out(self, mouse_pos):
@@ -38,7 +36,6 @@ class ZoomController:
         old_scale = self.model.scale
         new_scale = old_scale * factor
         if new_scale > Config.MAX_ZOOM_LEVEL:
-            print(f"Maximum Zoom level reached")
             new_scale = Config.MAX_ZOOM_LEVEL
 
         mouse_x, mouse_y = mouse_pos
@@ -46,11 +43,10 @@ class ZoomController:
         offset_y = (mouse_y + self.model.offset_y) * factor - mouse_y
         resized_img, new_width, new_height = self.model.resize_image(new_scale)
         self.model.update_offsets(offset_x, offset_y)
-        
-        w = self.zoom_view.GetSize().GetWidth() # short hand helper var
-        h = self.zoom_view.GetSize().GetHeight()
-        
+
         # Use the cached portion of the image
+        w = self.zoom_view.GetSize().GetWidth()
+        h = self.zoom_view.GetSize().GetHeight()
         if Config.use_cache:
             cropped_img = self.model.get_cached_image(new_scale, offset_x, offset_y, w, h)
         else:
@@ -78,6 +74,7 @@ class ZoomController:
                 self.debug_view.update_image()
 
     def load_image(self, image_path):
+        self.model.image_path = image_path  # Update the image path in the model
         self.model.img_pil = Image.open(image_path).convert('RGB')
         self.model.original_width, self.model.original_height = self.model.img_pil.size
         self.model.cache.clear()  # Clear the cache when loading a new image
@@ -85,6 +82,7 @@ class ZoomController:
         self.reset_zoom()
 
     def find_best_match(self):
+        print("looking for best match")
         s = self.model.scale
         ox = self.model.offset_x
         oy = self.model.offset_y
@@ -92,14 +90,26 @@ class ZoomController:
         h = self.zoom_view.GetSize().GetHeight()
         cached_img = self.model.get_cached_image(s, ox, oy, w, h)
         cached_img_avg_color = np.array(cached_img).mean(axis=(0, 1))
+        print(f"Cached image average color: {cached_img_avg_color[:5]}")
 
         thumbnail_avg_colors = ThumbnailGenerator.get_thumbnail_average_colors(os.path.dirname(self.model.image_path))
+        if not thumbnail_avg_colors:
+            print("No thumbnails found.")
+            return
+
+        print("Thumbnail average colors (first 5):")
+        for i, (thumb_name, thumb_avg_color) in enumerate(thumbnail_avg_colors.items()):
+            print(f"{thumb_name}: {thumb_avg_color}")
+            if i >= 4:
+                break
 
         best_match = None
         min_distance = float('inf')
 
         for thumb_name, thumb_avg_color in thumbnail_avg_colors.items():
             distance = np.linalg.norm(cached_img_avg_color - thumb_avg_color)
+            if Config.DEBUG:
+                print(f"Comparing with {thumb_name}, distance: {distance}")
             if distance < min_distance:
                 min_distance = distance
                 best_match = thumb_name
