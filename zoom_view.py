@@ -51,9 +51,13 @@ class ZoomView(wx.Frame):
             print("on_paint called from zoom_view")
         dc = wx.PaintDC(self.panel)
         dc.Clear()
-        model = self.controller.model
-        upper_left_x = -model.offset_x
-        upper_left_y = -model.offset_y
+        if Config.use_cache:
+            upper_left_x = 0
+            upper_left_y = 0
+        else:
+            model = self.controller.model
+            upper_left_x = -model.offset_x
+            upper_left_y = -model.offset_y
         if Config.DEBUG:
             print(f"Zoom View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
         if self.bitmap:

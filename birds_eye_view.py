@@ -1,5 +1,4 @@
 import wx
-from PIL import Image
 from config import Config
 
 class BirdsEyeView(wx.Frame):
@@ -34,7 +33,7 @@ class BirdsEyeView(wx.Frame):
             self.resized_width = frame_width
             self.resized_height = int(frame_width / aspect_ratio)
 
-        self.resized_img = model.img_pil.resize((self.resized_width, self.resized_height), Image.NEAREST) # Image.Resampling.LANCZOS
+        self.resized_img = model.img_pil.resize((self.resized_width, self.resized_height), Config.ANTIALIASING) # Image.Resampling.LANCZOS
         img_wx = wx.Image(self.resized_width, self.resized_height)
         img_wx.SetData(self.resized_img.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(img_wx)
@@ -67,13 +66,6 @@ class BirdsEyeView(wx.Frame):
                 print(f"Birds-eye View: Drawing rectangle at ({zoom_rect_x}, {zoom_rect_y}) with size ({zoom_rect_width}, {zoom_rect_height})")
             dc.DrawRectangle(zoom_rect_x, zoom_rect_y, zoom_rect_width, zoom_rect_height)
 
-        # Draw black border
-        width, height = self.panel.GetSize()
-        dc.SetPen(wx.Pen(wx.Colour(0, 0, 0), 1))
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(0, 0, width, height)
-
-
     def on_size(self, event):
         if Config.DEBUG:
             print("on_size called from birds_eye_view")
@@ -88,6 +80,13 @@ class BirdsEyeView(wx.Frame):
         new_offset_x = (mouse_x / self.resized_width * model.original_width * model.scale) - (self.GetSize().GetWidth() // 2)
         new_offset_y = (mouse_y / self.resized_height * model.original_height * model.scale) - (self.GetSize().GetHeight() // 2)
         self.controller.update_view(new_offset_x, new_offset_y)
+        # Ensure the zoom_view is updated correctly
+        if Config.use_cache:
+            cropped_img = model.get_cached_image(model.scale, new_offset_x, new_offset_y, self.controller.zoom_view.GetSize().GetWidth(), self.controller.zoom_view.GetSize().GetHeight())
+        else:
+            resized_img, _, _ = model.resize_image(model.scale)
+            cropped_img = resized_img.crop((int(new_offset_x), int(new_offset_y), int(new_offset_x + self.controller.zoom_view.GetSize().GetWidth()), int(new_offset_y + self.controller.zoom_view.GetSize().GetHeight())))
+        self.controller.zoom_view.update_image(cropped_img)
         self.panel.Refresh()
 
     def on_close(self, event):
