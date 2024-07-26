@@ -1,4 +1,5 @@
 import wx
+from PIL import Image
 
 class BirdsEyeView(wx.Frame):
     def __init__(self, parent, id, title, controller):
@@ -32,7 +33,7 @@ class BirdsEyeView(wx.Frame):
             self.resized_width = frame_width
             self.resized_height = int(frame_width / aspect_ratio)
 
-        self.resized_img = model.img_pil.resize((self.resized_width, self.resized_height), None) # Image.Resampling.LANCZOS
+        self.resized_img = model.img_pil.resize((self.resized_width, self.resized_height), Image.NEAREST) # Image.Resampling.LANCZOS
         img_wx = wx.Image(self.resized_width, self.resized_height)
         img_wx.SetData(self.resized_img.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(img_wx)

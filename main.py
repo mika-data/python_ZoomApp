@@ -5,6 +5,7 @@ from model import ImageModel
 from zoom_controller import ZoomController
 from zoom_view import ZoomView
 from birds_eye_view import BirdsEyeView
+from file_drop_target import FileDropTarget
 
 def main():
     app = wx.App()

@@ -1,4 +1,6 @@
 import wx
+from file_drop_target import FileDropTarget
+
 
 class ZoomView(wx.Frame):
     def __init__(self, parent, id, title, controller):
@@ -9,6 +11,7 @@ class ZoomView(wx.Frame):
         self.zooming = False
         self.init_ui()
         self.bind_events()
+        self.init_drag_and_drop()
 
     def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -25,6 +28,10 @@ class ZoomView(wx.Frame):
         self.panel.Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
         self.panel.Bind(wx.EVT_RIGHT_UP, self.on_right_up)
         self.panel.Bind(wx.EVT_MOTION, self.on_drag)
+
+    def init_drag_and_drop(self):
+        dt = FileDropTarget(self)
+        self.SetDropTarget(dt)
 
     def update_image(self, img):
         print("update_image called from zoom_view")
@@ -83,3 +90,6 @@ class ZoomView(wx.Frame):
 
     def on_right_up(self, event):
         self.zooming = False
+
+    def load_image(self, image_path):
+        self.controller.load_image(image_path)
