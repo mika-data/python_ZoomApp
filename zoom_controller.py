@@ -1,7 +1,9 @@
 from PIL import Image
 from config import Config
 import time
+import numpy as np
 from thumbnail_generator import ThumbnailGenerator
+import os
 
 class ZoomController:
     def __init__(self, model, zoom_view, birds_eye_view, debug_view=None):
@@ -13,6 +15,10 @@ class ZoomController:
     def zoom_in(self, mouse_pos):
         if self.model.scale < Config.MAX_ZOOM_LEVEL:
             self._animate_zoom(1 + Config.zoom_factor, mouse_pos)
+        else:
+            if Config.DEBUG:
+                print("looking for best match")
+            self.find_best_match()
 
     def zoom_out(self, mouse_pos):
         self._animate_zoom(1 - Config.zoom_factor, mouse_pos)
@@ -32,6 +38,7 @@ class ZoomController:
         old_scale = self.model.scale
         new_scale = old_scale * factor
         if new_scale > Config.MAX_ZOOM_LEVEL:
+            print(f"Maximum Zoom level reached")
             new_scale = Config.MAX_ZOOM_LEVEL
 
         mouse_x, mouse_y = mouse_pos
@@ -39,11 +46,15 @@ class ZoomController:
         offset_y = (mouse_y + self.model.offset_y) * factor - mouse_y
         resized_img, new_width, new_height = self.model.resize_image(new_scale)
         self.model.update_offsets(offset_x, offset_y)
+        
+        w = self.zoom_view.GetSize().GetWidth() # short hand helper var
+        h = self.zoom_view.GetSize().GetHeight()
+        
         # Use the cached portion of the image
         if Config.use_cache:
-            cropped_img = self.model.get_cached_image(new_scale, offset_x, offset_y, self.zoom_view.GetSize().GetWidth(), self.zoom_view.GetSize().GetHeight())
+            cropped_img = self.model.get_cached_image(new_scale, offset_x, offset_y, w, h)
         else:
-            cropped_img = resized_img.crop((int(offset_x), int(offset_y), int(offset_x + self.zoom_view.GetSize().GetWidth()), int(offset_y + self.zoom_view.GetSize().GetHeight())))
+            cropped_img = resized_img.crop((int(offset_x), int(offset_y), int(offset_x + w), int(offset_y + h)))
         self.zoom_view.update_image(cropped_img)
         self.birds_eye_view.update_image()
         if self.debug_view:
@@ -72,3 +83,26 @@ class ZoomController:
         self.model.cache.clear()  # Clear the cache when loading a new image
         ThumbnailGenerator.create_thumbnails(image_path)
         self.reset_zoom()
+
+    def find_best_match(self):
+        s = self.model.scale
+        ox = self.model.offset_x
+        oy = self.model.offset_y
+        w = self.zoom_view.GetSize().GetWidth()
+        h = self.zoom_view.GetSize().GetHeight()
+        cached_img = self.model.get_cached_image(s, ox, oy, w, h)
+        cached_img_avg_color = np.array(cached_img).mean(axis=(0, 1))
+
+        thumbnail_avg_colors = ThumbnailGenerator.get_thumbnail_average_colors(os.path.dirname(self.model.image_path))
+
+        best_match = None
+        min_distance = float('inf')
+
+        for thumb_name, thumb_avg_color in thumbnail_avg_colors.items():
+            distance = np.linalg.norm(cached_img_avg_color - thumb_avg_color)
+            if distance < min_distance:
+                min_distance = distance
+                best_match = thumb_name
+
+        if best_match:
+            print(f"Best match: {best_match} with color distance: {min_distance}")

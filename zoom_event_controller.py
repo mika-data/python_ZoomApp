@@ -38,7 +38,7 @@ class ZoomEventController:
     def on_motion(self, event):
         if not self.zooming:
             return
-        self.controller.zoom_in(event.GetPosition())
+        self.zoom_view.controller.zoom_in(event.GetPosition())
 
     def on_drag(self, event):
         if not event.Dragging():
@@ -49,11 +49,11 @@ class ZoomEventController:
     def on_key(self, event):
         keycode = event.GetKeyCode()
         if keycode in [wx.WXK_ADD, wx.WXK_NUMPAD_ADD]:
-            self.controller.zoom_in(self.zoom_view.panel.ScreenToClient(wx.GetMousePosition()))
+            self.zoom_view.controller.zoom_in(self.zoom_view.panel.ScreenToClient(wx.GetMousePosition()))
         elif keycode in [wx.WXK_SUBTRACT, wx.WXK_NUMPAD_SUBTRACT]:
-            self.controller.zoom_out(self.zoom_view.panel.ScreenToClient(wx.GetMousePosition()))
+            self.zoom_view.controller.zoom_out(self.zoom_view.panel.ScreenToClient(wx.GetMousePosition()))
         elif keycode in [ord('0'), wx.WXK_NUMPAD0]:
-            self.controller.reset_zoom()
+            self.zoom_view.controller.reset_zoom()
         else:
             event.Skip()
 
@@ -66,7 +66,7 @@ class ZoomEventController:
 
     def on_right_down(self, event):
         self.zooming = True
-        self.controller.zoom_out(event.GetPosition())
+        self.zoom_view.controller.zoom_out(event.GetPosition())
 
     def on_right_up(self, event):
         self.zooming = False
