@@ -1,4 +1,7 @@
 import wx
+import threading
+import time
+import random
 from config import Config
 
 class ZoomEventController:
@@ -6,6 +9,7 @@ class ZoomEventController:
         self.zoom_view = zoom_view
         self.controller = controller
         self.zooming = False
+        self.automatic_mode = False
         self.bind_events()
 
     def bind_events(self):
@@ -27,7 +31,7 @@ class ZoomEventController:
             upper_left_x = 0
             upper_left_y = 0
         else:
-            model = self.controller.model
+            model = self.zoom_view.controller.model
             upper_left_x = -model.offset_x
             upper_left_y = -model.offset_y
         if Config.DEBUG:
@@ -54,8 +58,30 @@ class ZoomEventController:
             self.zoom_view.controller.zoom_out(self.zoom_view.panel.ScreenToClient(wx.GetMousePosition()))
         elif keycode in [ord('0'), wx.WXK_NUMPAD0]:
             self.zoom_view.controller.reset_zoom()
+        elif keycode in [ord('A'), ord('a')]:
+            self.toggle_automatic_mode()
+        elif keycode == wx.WXK_ESCAPE:
+            self.automatic_mode = False
         else:
             event.Skip()
+
+    def toggle_automatic_mode(self):
+        self.automatic_mode = not self.automatic_mode
+        if self.automatic_mode:
+            threading.Thread(target=self.run_automatic_zoom).start()
+
+    def run_automatic_zoom(self):
+        while self.automatic_mode:
+            wx.CallAfter(self.automatic_zoom_step)
+            time.sleep(0.2)
+
+    def automatic_zoom_step(self):
+        if not self.automatic_mode:
+            return
+        w, h = self.zoom_view.GetSize().GetWidth(), self.zoom_view.GetSize().GetHeight()
+        random_x = random.randint(0, w)
+        random_y = random.randint(0, h)
+        self.zoom_view.controller.zoom_in((random_x, random_y))
 
     def on_left_down(self, event):
         self.zooming = True

@@ -89,8 +89,22 @@ class ZoomController:
         w = self.zoom_view.GetSize().GetWidth()
         h = self.zoom_view.GetSize().GetHeight()
         cached_img = self.model.get_cached_image(s, ox, oy, w, h)
-        cached_img_avg_color = np.array(cached_img).mean(axis=(0, 1))
-        print(f"Cached image average color: {cached_img_avg_color[:5]}")
+        cached_img_np = np.array(cached_img)
+        print(f"Cached image size: {cached_img_np.shape}")
+
+        # Calculate the pixel block dimensions
+        original_w = self.model.original_width
+        original_h = self.model.original_height
+        block_w = int(original_w / w)
+        block_h = int(original_h / h)
+        print(f"Block dimensions: {block_w} x {block_h}")
+
+        avg_colors = []
+        for y in range(0, cached_img_np.shape[0], block_h):
+            for x in range(0, cached_img_np.shape[1], block_w):
+                avg_colors.append(cached_img_np[y, x])
+
+        print(f"First 5 cached image colors: {avg_colors[:5]}")
 
         thumbnail_avg_colors = ThumbnailGenerator.get_thumbnail_average_colors(os.path.dirname(self.model.image_path))
         if not thumbnail_avg_colors:
@@ -103,16 +117,28 @@ class ZoomController:
             if i >= 4:
                 break
 
-        best_match = None
-        min_distance = float('inf')
+        best_match = {}
+        for y in range(0, cached_img_np.shape[0], block_h):
+            for x in range(0, cached_img_np.shape[1], block_w):
+                min_distance = float('inf')
+                best_thumbnail = None
+                for thumb_name, thumb_avg_color in thumbnail_avg_colors.items():
+                    distance = np.linalg.norm(cached_img_np[y, x] - thumb_avg_color)
+                    if distance < min_distance:
+                        min_distance = distance
+                        best_thumbnail = thumb_name
+                best_match[(x, y)] = best_thumbnail
+                if Config.DEBUG and y == 0 and x < 5 * block_w:  # Only print first row's first 5 matches for debugging
+                    print(f"Pixel block ({x}, {y}) best match: {best_thumbnail} with distance: {min_distance}")
 
-        for thumb_name, thumb_avg_color in thumbnail_avg_colors.items():
-            distance = np.linalg.norm(cached_img_avg_color - thumb_avg_color)
-            if Config.DEBUG:
-                print(f"Comparing with {thumb_name}, distance: {distance}")
-            if distance < min_distance:
-                min_distance = distance
-                best_match = thumb_name
+        print(f"Best match: {best_match[(0, 0)]} with color distance: {min_distance}")
 
-        if best_match:
-            print(f"Best match: {best_match} with color distance: {min_distance}")
+        # Replace each pixel block with the best matched thumbnail
+        size = Config.THUMBNAIL_SIZE
+        new_img = Image.new('RGB', (original_w, original_h))
+        for (x, y), thumb_name in best_match.items():
+            thumb_path = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{size}x{size}", thumb_name)
+            thumb_img = Image.open(thumb_path).resize((block_w, block_h))
+            new_img.paste(thumb_img, (x * block_w, y * block_h))
+
+        self.zoom_view.update_image(new_img)
