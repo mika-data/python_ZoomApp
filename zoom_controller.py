@@ -1,3 +1,5 @@
+from PIL import Image
+
 class ZoomController:
     def __init__(self, model, zoom_view, birds_eye_view):
         self.model = model
@@ -36,3 +38,8 @@ class ZoomController:
             self.model.update_offsets(offset_x, offset_y)
             self.zoom_view.refresh()
             self.birds_eye_view.refresh()
+
+    def load_image(self, image_path):
+        self.model.img_pil = Image.open(image_path).convert('RGB')
+        self.model.original_width, self.model.original_height = self.model.img_pil.size
+        self.reset_zoom()

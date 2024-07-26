@@ -10,11 +10,10 @@ class ImageModel:
         self.offset_y = 0
 
     def resize_image(self, scale):
-        print("resize_image called from model")
         self.scale = scale
         new_width = int(self.original_width * self.scale)
         new_height = int(self.original_height * self.scale)
-        resized_img = self.img_pil.resize((new_width, new_height), None) #Image.Resampling.LANCZOS
+        resized_img = self.img_pil.resize((new_width, new_height), Image.NEAREST) #Image.Resampling.LANCZOS
         return resized_img, new_width, new_height
 
     def get_original_image(self):
