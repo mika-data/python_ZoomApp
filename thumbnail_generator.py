@@ -36,13 +36,35 @@ class ThumbnailGenerator:
             return np_img.reshape((w * h, 3)).mean(axis=0)
 
     @staticmethod
-    def get_thumbnail_average_colors(directory):
-        size = Config.THUMBNAIL_SIZE
-        thumb_dir = os.path.join(directory, "_thumbs" + str(size) + "x" + str(size))
+    def get_thumbnail_average_colors(thumb_dir):
         avg_colors = {}
-        if os.path.exists(thumb_dir):
-            for filename in os.listdir(thumb_dir):
-                thumb_path = os.path.join(thumb_dir, filename)
-                if os.path.isfile(thumb_path) and filename.lower().endswith(Config.image_formats_list):
-                    avg_colors[filename] = ThumbnailGenerator.calculate_average_color(thumb_path)
+        if not os.path.exists(thumb_dir):
+            return avg_colors
+
+        for thumb_name in os.listdir(thumb_dir):
+            thumb_path = os.path.join(thumb_dir, thumb_name)
+            thumb_img = Image.open(thumb_path)
+            thumb_np = np.array(thumb_img)
+            thumb_avg_color = thumb_np.mean(axis=(0, 1))
+            avg_colors[thumb_name] = thumb_avg_color
+
         return avg_colors
+
+    @staticmethod
+    def find_best_match_thumbnail(avg_color, thumb_dir):
+        min_distance = float('inf')
+        best_match = None
+        if not os.path.exists(thumb_dir):
+            return None
+
+        for thumb_name in os.listdir(thumb_dir):
+            thumb_path = os.path.join(thumb_dir, thumb_name)
+            thumb_img = Image.open(thumb_path)
+            thumb_np = np.array(thumb_img)
+            thumb_avg_color = thumb_np.mean(axis=(0, 1))
+            distance = np.linalg.norm(avg_color - thumb_avg_color)
+            if distance < min_distance:
+                min_distance = distance
+                best_match = thumb_path
+
+        return best_match

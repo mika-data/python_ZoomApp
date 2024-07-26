@@ -3,6 +3,7 @@ from config import Config
 from PIL import Image
 import os
 import numpy as np
+from thumbnail_generator import ThumbnailGenerator
 
 class DebugView(wx.Frame):
     def __init__(self, parent, id, title, model):
@@ -70,21 +71,8 @@ class DebugView(wx.Frame):
         block_np = np.array(block_img)
         avg_color = block_np.mean(axis=(0, 1))
 
+        size=Config.THUMBNAIL_SIZE
         # Find the best match thumbnail based on the average color
-        min_distance = float('inf')
-        best_match = None
-        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{Config.THUMBNAIL_SIZE}x{Config.THUMBNAIL_SIZE}")
-        if not os.path.exists(thumb_dir):
-            return None
-
-        for thumb_name in os.listdir(thumb_dir):
-            thumb_path = os.path.join(thumb_dir, thumb_name)
-            thumb_img = Image.open(thumb_path)
-            thumb_np = np.array(thumb_img)
-            thumb_avg_color = thumb_np.mean(axis=(0, 1))
-            distance = np.linalg.norm(avg_color - thumb_avg_color)
-            if distance < min_distance:
-                min_distance = distance
-                best_match = thumb_path
-
+        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{size}x{size}")
+        best_match = ThumbnailGenerator.find_best_match_thumbnail(avg_color, thumb_dir)
         return best_match

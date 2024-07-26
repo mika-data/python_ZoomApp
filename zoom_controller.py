@@ -107,40 +107,31 @@ class ZoomController:
 
         print(f"First 5 cached image colors: {avg_colors[:5]}")
 
-        thumbnail_avg_colors = ThumbnailGenerator.get_thumbnail_average_colors(os.path.dirname(self.model.image_path))
-        if not thumbnail_avg_colors:
+        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{Config.THUMBNAIL_SIZE}x{Config.THUMBNAIL_SIZE}")
+        if not os.path.exists(thumb_dir):
             print("No thumbnails found.")
             return
-
-        print("Thumbnail average colors (first 5):")
-        for i, (thumb_name, thumb_avg_color) in enumerate(thumbnail_avg_colors.items()):
-            print(f"{thumb_name}: {thumb_avg_color}")
-            if i >= 4:
-                break
 
         best_match = {}
         for y in range(0, cached_img_np.shape[0], block_h):
             for x in range(0, cached_img_np.shape[1], block_w):
-                min_distance = float('inf')
-                best_thumbnail = None
-                for thumb_name, thumb_avg_color in thumbnail_avg_colors.items():
-                    distance = np.linalg.norm(cached_img_np[y, x] - thumb_avg_color)
-                    if distance < min_distance:
-                        min_distance = distance
-                        best_thumbnail = thumb_name
+                block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
+                block_np = np.array(block_img)
+                avg_color = block_np.mean(axis=(0, 1))
+                best_thumbnail = ThumbnailGenerator.find_best_match_thumbnail(avg_color, thumb_dir)
                 best_match[(x, y)] = best_thumbnail
                 if Config.DEBUG and y == 0 and x < 5 * block_w:  # Only print first row's first 5 matches for debugging
-                    print(f"Pixel block ({x}, {y}) best match: {best_thumbnail} with distance: {min_distance}")
+                    print(f"Pixel block ({x}, {y}) best match: {best_thumbnail}")
 
-        print(f"Best match: {best_match[(0, 0)]} with color distance: {min_distance}")
+        print(f"Best match: {best_match[(0, 0)]}")
 
         # Replace each pixel block with the best matched thumbnail
         size = Config.THUMBNAIL_SIZE
         new_img = Image.new('RGB', (original_w, original_h))
-        for (x, y), thumb_name in best_match.items():
-            thumb_path = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{size}x{size}", thumb_name)
-            thumb_img = Image.open(thumb_path).resize((block_w, block_h))
-            new_img.paste(thumb_img, (x * block_w, y * block_h))
+        for (x, y), thumb_path in best_match.items():
+            if thumb_path:
+                thumb_img = Image.open(thumb_path).resize((block_w, block_h))
+                new_img.paste(thumb_img, (x, y))
 
         # Choose a random pixel block for debugging
         rand_x = random.randint(0, (cached_img_np.shape[1] // block_w) - 1) * block_w
