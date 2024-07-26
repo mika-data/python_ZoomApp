@@ -7,7 +7,6 @@ class BirdsEyeView(wx.Frame):
         self.panel = wx.Panel(self)
         self.init_ui()
         self.bind_events()
-        #self.update_image()  # Display the initial image
 
     def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -20,6 +19,7 @@ class BirdsEyeView(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def update_image(self):
+        print("update_image called from birds_eye_view")
         frame_width, frame_height = self.panel.GetSize()
         model = self.controller.model
         aspect_ratio = model.original_width / model.original_height
@@ -37,10 +37,15 @@ class BirdsEyeView(wx.Frame):
         self.bitmap = wx.Bitmap(img_wx)
 
     def refresh(self):
+        print("refresh called from birds_eye_view")
         self.panel.Refresh()
 
     def on_paint(self, event):
+        print("on_paint called from birds_eye_view")
         dc = wx.PaintDC(self.panel)
+        upper_left_x = 0
+        upper_left_y = 0
+        print(f"Birds-eye View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
         dc.DrawBitmap(self.bitmap, 0, 0, True)
         model = self.controller.model
         zoom_rect_width = self.resized_width * self.GetSize().GetWidth() / model.original_width / model.scale
@@ -53,6 +58,7 @@ class BirdsEyeView(wx.Frame):
         dc.DrawRectangle(zoom_rect_x, zoom_rect_y, zoom_rect_width, zoom_rect_height)
 
     def on_size(self, event):
+        print("on_size called from birds_eye_view")
         self.update_image()
         self.panel.Refresh()
         event.Skip()

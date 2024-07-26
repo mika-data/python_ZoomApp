@@ -29,22 +29,30 @@ class ZoomView(wx.Frame):
         self.static_bitmap.Bind(wx.EVT_MOTION, self.on_drag)
 
     def update_image(self, img):
+        print("update_image called from zoom_view")
         img_wx = wx.Image(img.size[0], img.size[1])
         img_wx.SetData(img.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(img_wx)
+        self.refresh()
+
+    def refresh(self):
+        print("refresh called from zoom_view")
         self.static_bitmap.SetBitmap(self.bitmap)
         self.panel.Refresh()
 
-    def refresh(self):
-        self.panel.Refresh()
-
     def on_paint(self, event):
+        print("on_paint called from zoom_view")
         dc = wx.PaintDC(self.panel)
         dc.Clear()
+        #debug double rendering
+        upper_left_x = -model.offset_x
+        upper_left_y = -model.offset_y
+        print(f"Zoom View: on_paint method drawing bitmap at ({upper_left_x}, {upper_left_y})")
         model = self.controller.model
         dc.DrawBitmap(self.bitmap, -model.offset_x, -model.offset_y)
 
     def on_motion(self, event):
+        print("on_motion called from birds_eye_view")
         if not self.zooming:
             return
         self.controller.zoom_in(event.GetPosition())
