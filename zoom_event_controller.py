@@ -39,10 +39,20 @@ class ZoomEventController:
         if self.zoom_view.bitmap:
             dc.DrawBitmap(self.zoom_view.bitmap, upper_left_x, upper_left_y)
 
+        # Draw the pink dashed line around the pixel block if hovering
+        if self.zoom_view.hover_block:
+            x, y, block_w, block_h = self.zoom_view.hover_block
+            dc.SetPen(wx.Pen(wx.Colour(255, 20, 147), 1, wx.PENSTYLE_SHORT_DASH))  # Pink dashed line
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(x, y, block_w, block_h)
+
     def on_motion(self, event):
         if not self.zooming:
-            return
-        self.zoom_view.controller.zoom_in(event.GetPosition())
+            x, y = event.GetPosition()
+            self.zoom_view.update_hover_block(x, y)
+            self.zoom_view.panel.Refresh()
+        else:
+            self.zoom_view.controller.zoom_in(event.GetPosition())
 
     def on_drag(self, event):
         if not event.Dragging():

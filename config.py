@@ -7,5 +7,5 @@ class Config:
     DEBUG = True # Set to False to disable debug prints
     ANTIALIASING = Image.NEAREST #Image.Resampling.LANCZOS
     use_cache = True  # Flag to enable or disable caching
-    THUMBNAIL_SIZE = 128
+    THUMBNAIL_SIZE = 32
     image_formats_list = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')

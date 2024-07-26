@@ -1,9 +1,10 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 from config import Config
 import time
 import numpy as np
 from thumbnail_generator import ThumbnailGenerator
 import os
+import random
 
 class ZoomController:
     def __init__(self, model, zoom_view, birds_eye_view, debug_view=None):
@@ -141,4 +142,19 @@ class ZoomController:
             thumb_img = Image.open(thumb_path).resize((block_w, block_h))
             new_img.paste(thumb_img, (x * block_w, y * block_h))
 
-        self.zoom_view.update_image(new_img)
+        # Choose a random pixel block for debugging
+        rand_x = random.randint(0, (cached_img_np.shape[1] // block_w) - 1) * block_w
+        rand_y = random.randint(0, (cached_img_np.shape[0] // block_h) - 1) * block_h
+        draw = ImageDraw.Draw(new_img)
+        # Draw dashed pink line around the pixel block
+        for i in range(rand_x, rand_x + block_w, 2):
+            draw.line([(i, rand_y), (i + 1, rand_y)], fill="pink")
+            draw.line([(i, rand_y + block_h - 1), (i + 1, rand_y + block_h - 1)], fill="pink")
+        for i in range(rand_y, rand_y + block_h, 2):
+            draw.line([(rand_x, i), (rand_x, i + 1)], fill="pink")
+            draw.line([(rand_x + block_w - 1, i), (rand_x + block_w - 1, i + 1)], fill="pink")
+
+        # Use the newly created image as the full-scale image
+        self.model.img_pil = new_img
+        self.model.original_width, self.model.original_height = new_img.size
+        self.reset_zoom()  # Reset the zoom level to 0 and update views

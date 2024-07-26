@@ -9,9 +9,10 @@ class ZoomView(wx.Frame):
         self.controller = controller
         self.panel = wx.Panel(self)
         self.bitmap = None
+        self.hover_block = None
         self.init_ui()
         self.init_drag_and_drop()
-        self.event_controller = ZoomEventController(self, self.controller)
+        self.event_controller = ZoomEventController(self, controller)
 
     def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -38,3 +39,24 @@ class ZoomView(wx.Frame):
 
     def load_image(self, image_path):
         self.controller.load_image(image_path)
+
+    def update_hover_block(self, x, y):
+        # Determine scale and offsets
+        s = self.controller.model.scale
+        ox = self.controller.model.offset_x
+        oy = self.controller.model.offset_y
+
+        # Calculate the block dimensions based on the scale factor
+        block_w = int(s)
+        block_h = int(s)
+
+        # Adjust the coordinates for the offsets
+        adjusted_x = x + ox
+        adjusted_y = y + oy
+
+        # Find the pixel block the mouse is hovering over
+        x_block = (adjusted_x // block_w) * block_w - ox
+        y_block = (adjusted_y // block_h) * block_h - oy
+
+        # Set the hover block with the calculated dimensions
+        self.hover_block = (x_block, y_block, block_w, block_h)
