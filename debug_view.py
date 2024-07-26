@@ -18,6 +18,7 @@ class DebugView(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel.SetSizer(sizer)
         self.panel.Bind(wx.EVT_PAINT, self.on_paint)
+        self.status_bar = self.CreateStatusBar()
 
     def refresh(self):
         if Config.DEBUG:
@@ -32,6 +33,41 @@ class DebugView(wx.Frame):
     def update_hover_block_bitmap(self):
         if self.hover_block:
             x, y, block_w, block_h = self.hover_block
+            print(f"Hover block - X: {x}, Y: {y}, W: {block_w}, H: {block_h}")
+
+                        # Ensure the block is within image boundaries
+            if x < 0 or y < 0 or x + block_w > self.model.img_pil.width or y + block_h > self.model.img_pil.height:
+                print("Hover block is out of image boundaries")
+                self.status_bar.SetStatusText("Block out of image boundaries")
+                return
+
+            try:
+                # Crop the block from the original image
+                block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
+                block_np = np.array(block_img)
+                print(f"Block numpy array shape: {block_np.shape}")
+
+                if block_np.size == 0:
+                    print(f"Invalid block size, array is empty for block ({x}, {y}) with size ({block_w}, {block_h})")
+                    avg_color = [0, 0, 0]
+                else:
+                    avg_color = block_np.mean(axis=(0, 1))
+                    if not np.isfinite(avg_color).all():
+                        print(f"Invalid color values found for block ({x}, {y}) with size ({block_w}, {block_h})")
+                        avg_color = [0, 0, 0]
+
+                self.status_bar.SetStatusText(f"Size: {block_w}x{block_h}, Color: {avg_color}")
+                
+                # Create wx.Bitmap from the block image
+                img_wx = wx.Image(block_img.size[0], block_img.size[1])
+                img_wx.SetData(block_img.convert("RGB").tobytes())
+                self.bitmap = wx.Bitmap(img_wx)
+
+            except Exception as e:
+                print(f"Error processing hover block: {e}")
+                self.status_bar.SetStatusText(f"Error: {e}")                        
+                        
+            
             # Crop the block from the original image
             block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
             img_wx = wx.Image(block_img.size[0], block_img.size[1])
