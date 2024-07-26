@@ -1,17 +1,17 @@
 from PIL import Image
 from config import Config
 import time
+from thumbnail_generator import ThumbnailGenerator
 
 class ZoomController:
-    MAX_ZOOM_LEVEL = 20  # Set an appropriate maximum zoom level
-
-    def __init__(self, model, zoom_view, birds_eye_view):
+    def __init__(self, model, zoom_view, birds_eye_view, debug_view=None):
         self.model = model
         self.zoom_view = zoom_view
         self.birds_eye_view = birds_eye_view
+        self.debug_view = debug_view
 
     def zoom_in(self, mouse_pos):
-        if self.model.scale < self.MAX_ZOOM_LEVEL:
+        if self.model.scale < Config.MAX_ZOOM_LEVEL:
             self._animate_zoom(1 + Config.zoom_factor, mouse_pos)
 
     def zoom_out(self, mouse_pos):
@@ -23,14 +23,16 @@ class ZoomController:
         self.model.offset_y = 0
         self.zoom_view.update_image(self.model.get_original_image())
         self.birds_eye_view.update_image()
+        if self.debug_view:
+            self.debug_view.update_image()
 
     def _animate_zoom(self, factor, mouse_pos):
         start_time = time.time()  # Start measuring time
 
         old_scale = self.model.scale
         new_scale = old_scale * factor
-        if new_scale > self.MAX_ZOOM_LEVEL:
-            new_scale = self.MAX_ZOOM_LEVEL
+        if new_scale > Config.MAX_ZOOM_LEVEL:
+            new_scale = Config.MAX_ZOOM_LEVEL
 
         mouse_x, mouse_y = mouse_pos
         offset_x = (mouse_x + self.model.offset_x) * factor - mouse_x
@@ -44,6 +46,8 @@ class ZoomController:
             cropped_img = resized_img.crop((int(offset_x), int(offset_y), int(offset_x + self.zoom_view.GetSize().GetWidth()), int(offset_y + self.zoom_view.GetSize().GetHeight())))
         self.zoom_view.update_image(cropped_img)
         self.birds_eye_view.update_image()
+        if self.debug_view:
+            self.debug_view.update_image()
         self.zoom_view.refresh()
         self.birds_eye_view.refresh()
 
@@ -59,9 +63,12 @@ class ZoomController:
             self.model.update_offsets(offset_x, offset_y)
             self.zoom_view.refresh()
             self.birds_eye_view.refresh()
+            if self.debug_view:
+                self.debug_view.update_image()
 
     def load_image(self, image_path):
         self.model.img_pil = Image.open(image_path).convert('RGB')
         self.model.original_width, self.model.original_height = self.model.img_pil.size
         self.model.cache.clear()  # Clear the cache when loading a new image
+        ThumbnailGenerator.create_thumbnails(image_path)
         self.reset_zoom()

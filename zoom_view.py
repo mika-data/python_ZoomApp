@@ -98,6 +98,3 @@ class ZoomView(wx.Frame):
 
     def on_right_up(self, event):
         self.zooming = False
-
-    def load_image(self, image_path):
-        self.controller.load_image(image_path)
