@@ -46,13 +46,15 @@ class BirdsEyeView(wx.Frame):
 
     def on_paint(self, event):
         if Config.DEBUG:
-            print("on_paint called from birds_eye_view")
+            # print("on_paint called from birds_eye_view")
+            pass
         dc = wx.PaintDC(self.panel)
         if self.resized_img:
             upper_left_x = 0
             upper_left_y = 0
             if Config.DEBUG:
-                print(f"Birds-eye View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
+                # print(f"Birds-eye View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
+                pass
             dc.DrawBitmap(self.bitmap, upper_left_x, upper_left_y, True)
             model = self.controller.model
             zoom_rect_width = self.resized_width * self.GetSize().GetWidth() / model.original_width / model.scale
@@ -81,7 +83,7 @@ class BirdsEyeView(wx.Frame):
         new_offset_y = (mouse_y / self.resized_height * model.original_height * model.scale) - (self.GetSize().GetHeight() // 2)
         self.controller.update_view(new_offset_x, new_offset_y)
         # Ensure the zoom_view is updated correctly
-        if Config.use_cache:
+        if Config.USE_CACHE:
             cropped_img = model.get_cached_image(model.scale, new_offset_x, new_offset_y, self.controller.zoom_view.GetSize().GetWidth(), self.controller.zoom_view.GetSize().GetHeight())
         else:
             resized_img, _, _ = model.resize_image(model.scale)
