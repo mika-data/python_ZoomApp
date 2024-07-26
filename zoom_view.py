@@ -1,6 +1,6 @@
 import wx
 from file_drop_target import FileDropTarget
-
+from config import Config
 
 class ZoomView(wx.Frame):
     def __init__(self, parent, id, title, controller):
@@ -34,24 +34,28 @@ class ZoomView(wx.Frame):
         self.SetDropTarget(dt)
 
     def update_image(self, img):
-        print("update_image called from zoom_view")
+        if Config.DEBUG:
+            print("update_image called from zoom_view")
         img_wx = wx.Image(img.size[0], img.size[1])
         img_wx.SetData(img.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(img_wx)
         self.refresh()
 
     def refresh(self):
-        print("refresh called from zoom_view")
+        if Config.DEBUG:
+            print("refresh called from zoom_view")
         self.panel.Refresh()
 
     def on_paint(self, event):
-        print("on_paint called from zoom_view")
+        if Config.DEBUG:
+            print("on_paint called from zoom_view")
         dc = wx.PaintDC(self.panel)
         dc.Clear()
         model = self.controller.model
         upper_left_x = -model.offset_x
         upper_left_y = -model.offset_y
-        print(f"Zoom View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
+        if Config.DEBUG:
+            print(f"Zoom View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
         if self.bitmap:
             dc.DrawBitmap(self.bitmap, upper_left_x, upper_left_y)
 

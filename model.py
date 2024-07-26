@@ -1,4 +1,5 @@
 from PIL import Image
+from config import Config
 
 class ImageModel:
     def __init__(self, image_path):
@@ -13,7 +14,7 @@ class ImageModel:
         self.scale = scale
         new_width = int(self.original_width * self.scale)
         new_height = int(self.original_height * self.scale)
-        resized_img = self.img_pil.resize((new_width, new_height), Image.NEAREST) #Image.Resampling.LANCZOS
+        resized_img = self.img_pil.resize((new_width, new_height), Image.NEAREST) 
         return resized_img, new_width, new_height
 
     def get_original_image(self):

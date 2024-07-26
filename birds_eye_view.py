@@ -1,5 +1,6 @@
 import wx
 from PIL import Image
+from config import Config
 
 class BirdsEyeView(wx.Frame):
     def __init__(self, parent, id, title, controller):
@@ -8,7 +9,6 @@ class BirdsEyeView(wx.Frame):
         self.panel = wx.Panel(self)
         self.init_ui()
         self.bind_events()
-        # self.update_image()  # Display the initial image
 
     def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -21,7 +21,8 @@ class BirdsEyeView(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def update_image(self):
-        print("update_image called from birds_eye_view")
+        if Config.DEBUG:
+            print("update_image called from birds_eye_view")
         frame_width, frame_height = self.panel.GetSize()
         model = self.controller.model
         aspect_ratio = model.original_width / model.original_height
@@ -40,16 +41,19 @@ class BirdsEyeView(wx.Frame):
         self.panel.Refresh()
 
     def refresh(self):
-        print("refresh called from birds_eye_view")
+        if Config.DEBUG:
+            print("refresh called from birds_eye_view")
         self.panel.Refresh()
 
     def on_paint(self, event):
-        print("on_paint called from birds_eye_view")
+        if Config.DEBUG:
+            print("on_paint called from birds_eye_view")
         dc = wx.PaintDC(self.panel)
         if self.resized_img:
             upper_left_x = 0
             upper_left_y = 0
-            print(f"Birds-eye View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
+            if Config.DEBUG:
+                print(f"Birds-eye View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
             dc.DrawBitmap(self.bitmap, upper_left_x, upper_left_y, True)
             model = self.controller.model
             zoom_rect_width = self.resized_width * self.GetSize().GetWidth() / model.original_width / model.scale
@@ -59,7 +63,8 @@ class BirdsEyeView(wx.Frame):
 
             dc.SetBrush(wx.Brush("green", wx.TRANSPARENT))
             dc.SetPen(wx.Pen(wx.Colour(0, 255, 0), 2))
-            print(f"Birds-eye View: Drawing rectangle at ({zoom_rect_x}, {zoom_rect_y}) with size ({zoom_rect_width}, {zoom_rect_height})")
+            if Config.DEBUG:
+                print(f"Birds-eye View: Drawing rectangle at ({zoom_rect_x}, {zoom_rect_y}) with size ({zoom_rect_width}, {zoom_rect_height})")
             dc.DrawRectangle(zoom_rect_x, zoom_rect_y, zoom_rect_width, zoom_rect_height)
 
         # Draw black border
@@ -70,12 +75,14 @@ class BirdsEyeView(wx.Frame):
 
 
     def on_size(self, event):
-        print("on_size called from birds_eye_view")
+        if Config.DEBUG:
+            print("on_size called from birds_eye_view")
         self.update_image()
         event.Skip()
 
     def on_left_down(self, event):
-        print("on_left_down called from birds_eye_view")
+        if Config.DEBUG:
+            print("on_left_down called from birds_eye_view")
         mouse_x, mouse_y = event.GetPosition()
         model = self.controller.model
         new_offset_x = (mouse_x / self.resized_width * model.original_width * model.scale) - (self.GetSize().GetWidth() // 2)
