@@ -55,8 +55,12 @@ class ZoomView(wx.Frame):
         adjusted_y = y + oy
 
         # Find the pixel block the mouse is hovering over
-        x_block = (adjusted_x // block_w) * block_w - ox
-        y_block = (adjusted_y // block_h) * block_h - oy
+        x_block = (adjusted_x // block_w) * block_w
+        y_block = (adjusted_y // block_h) * block_h
 
         # Set the hover block with the calculated dimensions
         self.hover_block = (x_block, y_block, block_w, block_h)
+
+        # Notify the debug view if available
+        if self.controller.debug_view:
+            self.controller.debug_view.set_hover_block(x_block, y_block, block_w, block_h)

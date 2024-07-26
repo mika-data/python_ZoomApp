@@ -27,7 +27,7 @@ class ZoomEventController:
             print("on_paint called from zoom_view")
         dc = wx.PaintDC(self.zoom_view.panel)
         dc.Clear()
-        if Config.use_cache:
+        if Config.USE_CACHE:
             upper_left_x = 0
             upper_left_y = 0
         else:

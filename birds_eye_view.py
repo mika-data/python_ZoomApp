@@ -83,7 +83,7 @@ class BirdsEyeView(wx.Frame):
         new_offset_y = (mouse_y / self.resized_height * model.original_height * model.scale) - (self.GetSize().GetHeight() // 2)
         self.controller.update_view(new_offset_x, new_offset_y)
         # Ensure the zoom_view is updated correctly
-        if Config.use_cache:
+        if Config.USE_CACHE:
             cropped_img = model.get_cached_image(model.scale, new_offset_x, new_offset_y, self.controller.zoom_view.GetSize().GetWidth(), self.controller.zoom_view.GetSize().GetHeight())
         else:
             resized_img, _, _ = model.resize_image(model.scale)

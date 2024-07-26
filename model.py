@@ -13,7 +13,7 @@ class ImageModel:
         self.full_resized_img = None
 
     def resize_image(self, scale):
-        if Config.use_cache:
+        if Config.USE_CACHE:
             if scale in self.cache:
                 return self.cache[scale]  # Return cached image if available
 

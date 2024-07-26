@@ -32,7 +32,7 @@ def main():
     zoom_view.update_image(model.get_original_image())  
     birds_eye_view.update_image()
     if Config.DEBUG:
-        debug_view.update_image()
+        debug_view.update_hover_block_bitmap()
     
     wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()

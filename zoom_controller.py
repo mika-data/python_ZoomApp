@@ -15,12 +15,12 @@ class ZoomController:
 
     def zoom_in(self, mouse_pos):
         if self.model.scale < Config.MAX_ZOOM_LEVEL:
-            self._animate_zoom(1 + Config.zoom_factor, mouse_pos)
+            self._animate_zoom(1 + Config.ZOOM_FACTOR, mouse_pos)
         else:
             self.find_best_match()
 
     def zoom_out(self, mouse_pos):
-        self._animate_zoom(1 - Config.zoom_factor, mouse_pos)
+        self._animate_zoom(1 - Config.ZOOM_FACTOR, mouse_pos)
 
     def reset_zoom(self):
         self.model.scale = 1.0
@@ -29,7 +29,7 @@ class ZoomController:
         self.zoom_view.update_image(self.model.get_original_image())
         self.birds_eye_view.update_image()
         if self.debug_view:
-            self.debug_view.update_image()
+            self.debug_view.update_hover_block_bitmap()
 
     def _animate_zoom(self, factor, mouse_pos):
         start_time = time.time()  # Start measuring time
@@ -48,14 +48,14 @@ class ZoomController:
         # Use the cached portion of the image
         w = self.zoom_view.GetSize().GetWidth()
         h = self.zoom_view.GetSize().GetHeight()
-        if Config.use_cache:
+        if Config.USE_CACHE:
             cropped_img = self.model.get_cached_image(new_scale, offset_x, offset_y, w, h)
         else:
             cropped_img = resized_img.crop((int(offset_x), int(offset_y), int(offset_x + w), int(offset_y + h)))
         self.zoom_view.update_image(cropped_img)
         self.birds_eye_view.update_image()
         if self.debug_view:
-            self.debug_view.update_image()
+            self.debug_view.update_hover_block_bitmap()
         self.zoom_view.refresh()
         self.birds_eye_view.refresh()
 
@@ -72,7 +72,7 @@ class ZoomController:
             self.zoom_view.refresh()
             self.birds_eye_view.refresh()
             if self.debug_view:
-                self.debug_view.update_image()
+                self.debug_view.update_hover_block_bitmap()
 
     def load_image(self, image_path):
         self.model.image_path = image_path  # Update the image path in the model
