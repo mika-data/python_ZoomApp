@@ -14,7 +14,7 @@ class ImageModel:
         self.scale = scale
         new_width = int(self.original_width * self.scale)
         new_height = int(self.original_height * self.scale)
-        resized_img = self.img_pil.resize((new_width, new_height), Image.NEAREST) 
+        resized_img = self.img_pil.resize((new_width, new_height), Config.ANTIALIASING) 
         return resized_img, new_width, new_height
 
     def get_original_image(self):
