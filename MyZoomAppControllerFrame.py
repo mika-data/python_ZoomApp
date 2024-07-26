@@ -70,11 +70,18 @@ class MyZoomAppControllerFrame(wx.Frame):
         # Center the zoom frame on the clicked position
         mouse_x, mouse_y = event.GetPosition()
         zoom_frame = self.zoom_frame
-        zoom_frame.offset_x = (mouse_x / self.resized_width * zoom_frame.original_width * zoom_frame.scale) - (zoom_frame.GetSize().GetWidth() // 2)
-        zoom_frame.offset_y = (mouse_y / self.resized_height * zoom_frame.original_height * zoom_frame.scale) - (zoom_frame.GetSize().GetHeight() // 2)
+        new_offset_x = (mouse_x / self.resized_width * zoom_frame.original_width * zoom_frame.scale) - (zoom_frame.GetSize().GetWidth() // 2)
+        new_offset_y = (mouse_y / self.resized_height * zoom_frame.original_height * zoom_frame.scale) - (zoom_frame.GetSize().GetHeight() // 2)
         zoom_frame.panel.Refresh()
+
+        zoom_frame.update_view(new_offset_x, new_offset_y)
         self.panel.Refresh()
 
     def on_close_window(self, event):
-        self.zoom_frame.Destroy()
+        try:
+            self.zoom_frame.Destroy()
+        except Exception as e:
+            # Exception might occur if the zoom_frame has been closed already
+            # Ignore that case and continue
+            pass
         self.Destroy()

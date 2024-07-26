@@ -82,7 +82,8 @@ class MyZoomAppFrame(wx.Frame):
         self.img_wx = wx.Image(new_width, new_height)
         self.img_wx.SetData(resized_img.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(self.img_wx)
-
+        # Update the static bitmap
+        self.static_bitmap.SetBitmap(self.bitmap)
         self.panel.Refresh()
 
     def reset_zoom(self):
@@ -92,6 +93,11 @@ class MyZoomAppFrame(wx.Frame):
         self.img_wx = wx.Image(self.original_width, self.original_height)
         self.img_wx.SetData(self.img_pil.convert("RGB").tobytes())
         self.bitmap = wx.Bitmap(self.img_wx)
+        self.panel.Refresh()
+
+    def update_view(self, offset_x, offset_y):
+        self.offset_x = offset_x
+        self.offset_y = offset_y
         self.panel.Refresh()
 
     def on_paint(self, event):
@@ -114,6 +120,7 @@ class MyZoomAppFrame(wx.Frame):
 
     def on_key(self, event):
         keycode = event.GetKeyCode()
+        print("Key with keycode {} pressed", keycode)
         if keycode == wx.WXK_ADD or keycode == wx.WXK_NUMPAD_ADD:  # '+' key
             self.animate_zoom(1.1, self.panel.ScreenToClient(wx.GetMousePosition()))  # Zoom in
         elif keycode == wx.WXK_SUBTRACT or keycode == wx.WXK_NUMPAD_SUBTRACT:  # '-' key
