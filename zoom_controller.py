@@ -1,4 +1,5 @@
 from PIL import Image
+from config import Config
 
 class ZoomController:
     def __init__(self, model, zoom_view, birds_eye_view):
@@ -7,10 +8,10 @@ class ZoomController:
         self.birds_eye_view = birds_eye_view
 
     def zoom_in(self, mouse_pos):
-        self._animate_zoom(1.1, mouse_pos)
+        self._animate_zoom(1 + Config.zoom_factor, mouse_pos)
 
     def zoom_out(self, mouse_pos):
-        self._animate_zoom(0.9, mouse_pos)
+        self._animate_zoom(1 - Config.zoom_factor, mouse_pos)
 
     def reset_zoom(self):
         self.model.scale = 1.0
@@ -33,7 +34,8 @@ class ZoomController:
         self.birds_eye_view.refresh()
 
     def update_view(self, offset_x, offset_y):
-        print("update_view called in ZoomController")
+        if Config.DEBUG:
+            print("update_view called in ZoomController")
         if self.model.offset_x != offset_x or self.model.offset_y != offset_y:
             self.model.update_offsets(offset_x, offset_y)
             self.zoom_view.refresh()
