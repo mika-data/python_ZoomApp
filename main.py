@@ -18,7 +18,6 @@ def main():
     debug_view = None
     if Config.DEBUG:
         debug_view = DebugView(None, -1, 'Debug View Frame', model)
-        debug_view.Show()
     
     controller = ZoomController(model, zoom_view, birds_eye_view, debug_view)
     zoom_view.controller = controller
@@ -26,14 +25,15 @@ def main():
     
     zoom_view.Show()
     birds_eye_view.Show()
+    if debug_view:
+        debug_view.controller = controller  # Ensure the controller is set correctly
+        debug_view.Show()
 
     # Display the initial image before zooming
     model.resize_image(1.0)  # Ensure the full resized image is available
     zoom_view.update_image(model.get_original_image())  
     birds_eye_view.update_image()
-    if Config.DEBUG:
-        debug_view.update_hover_block_bitmap()
-    
+
     wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
 

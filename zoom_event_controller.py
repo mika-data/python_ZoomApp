@@ -20,7 +20,7 @@ class ZoomEventController:
         self.zoom_view.panel.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.zoom_view.panel.Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
         self.zoom_view.panel.Bind(wx.EVT_RIGHT_UP, self.on_right_up)
-        self.zoom_view.panel.Bind(wx.EVT_MOTION, self.on_drag)
+        # self.zoom_view.panel.Bind(wx.EVT_MOTION, self.on_drag)
 
     def on_paint(self, event):
         if Config.DEBUG:

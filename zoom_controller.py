@@ -12,7 +12,26 @@ class ZoomController:
         self.zoom_view = zoom_view
         self.birds_eye_view = birds_eye_view
         self.debug_view = debug_view
+        self.initial_offset_x = 0
+        self.initial_offset_y = 0
 
+    def update_initial_offset(self):
+        s = self.model.scale
+        self.initial_offset_x = self.model.offset_x % s
+        self.initial_offset_y = self.model.offset_y % s
+
+        if Config.DEBUG:
+            print(f"Initial Offset: ({self.initial_offset_x}, {self.initial_offset_y})")
+
+    def set_zoom_level(self, zoom_level):
+        # Update the zoom level
+        self.model.set_zoom_level(zoom_level)
+        self.update_initial_offset()
+        self.zoom_view.refresh()
+        self.birds_eye_view.refresh()
+        if self.debug_view:
+            self.debug_view.refresh()
+            
     def zoom_in(self, mouse_pos):
         if self.model.scale < Config.MAX_ZOOM_LEVEL:
             self._animate_zoom(1 + Config.ZOOM_FACTOR, mouse_pos)
@@ -84,12 +103,12 @@ class ZoomController:
 
     def find_best_match(self):
         print("looking for best match")
-        s = self.model.scale
+        scale = self.model.scale
         ox = self.model.offset_x
         oy = self.model.offset_y
         w = self.zoom_view.GetSize().GetWidth()
         h = self.zoom_view.GetSize().GetHeight()
-        cached_img = self.model.get_cached_image(s, ox, oy, w, h)
+        cached_img = self.model.get_cached_image(scale, ox, oy, w, h)
         cached_img_np = np.array(cached_img)
         print(f"Cached image size: {cached_img_np.shape}")
 
@@ -106,8 +125,8 @@ class ZoomController:
                 avg_colors.append(cached_img_np[y, x])
 
         print(f"First 5 cached image colors: {avg_colors[:5]}")
-
-        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{Config.THUMBNAIL_SIZE}x{Config.THUMBNAIL_SIZE}")
+        size = Config.THUMBNAIL_SIZE
+        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{size}x{size}")
         if not os.path.exists(thumb_dir):
             print("No thumbnails found.")
             return
@@ -126,7 +145,6 @@ class ZoomController:
         print(f"Best match: {best_match[(0, 0)]}")
 
         # Replace each pixel block with the best matched thumbnail
-        size = Config.THUMBNAIL_SIZE
         new_img = Image.new('RGB', (original_w, original_h))
         for (x, y), thumb_path in best_match.items():
             if thumb_path:

@@ -1,29 +1,101 @@
 import wx
-from config import Config
-from PIL import Image
-import os
+import threading
+import time
+import random
 import numpy as np
-from thumbnail_generator import ThumbnailGenerator
+from config import Config
+from zoom_event_controller import ZoomEventController
 
 class DebugView(wx.Frame):
-    def __init__(self, parent, id, title, model):
+    def __init__(self, parent, id, title, controller):
         super().__init__(parent, id, title)
+        self.controller = controller
         self.panel = wx.Panel(self)
         self.bitmap = None
         self.hover_block = None
-        self.model = model
+        self.status_bar = self.CreateStatusBar()
         self.init_ui()
+        self.event_controller = ZoomEventController(self, controller)
 
     def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel.SetSizer(sizer)
-        self.panel.Bind(wx.EVT_PAINT, self.on_paint)
-        self.status_bar = self.CreateStatusBar()
+        self.panel.SetFocus()
+        self.panel.SetFocusIgnoringChildren()
+
+    def update_image(self, img):
+        if Config.DEBUG:
+            print("update_image called from debug_view")
+        img_wx = wx.Image(img.size[0], img.size[1])
+        img_wx.SetData(img.convert("RGB").tobytes())
+        self.bitmap = wx.Bitmap(img_wx)
+        self.refresh()
 
     def refresh(self):
         if Config.DEBUG:
             print("refresh called from debug_view")
         self.panel.Refresh()
+
+    def load_image(self, image_path):
+        self.controller.load_image(image_path)
+
+    def update_hover_block(self, x, y):
+        # Determine scale and offsets
+        s = self.controller.model.scale
+        ox = self.controller.model.offset_x
+        oy = self.controller.model.offset_y
+
+        # Calculate the block dimensions based on the scale factor
+        block_w = int(s)
+        block_h = int(s)
+
+        # Adjust the coordinates for the offsets
+        adjusted_x = x + ox
+        adjusted_y = y + oy
+
+        # Find the pixel block the mouse is hovering over
+        x_block = (adjusted_x // block_w) * block_w
+        y_block = (adjusted_y // block_h) * block_h
+
+        if Config.DEBUG:
+            print(f"Hover Block Position: ({x_block}, {y_block}) with block size ({block_w}, {block_h})")
+            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x}, {adjusted_y}), Offsets: ({ox}, {oy}), Scale: {s}")
+
+        # Set the hover block with the calculated dimensions
+        self.hover_block = (x_block, y_block, block_w, block_h)
+
+    def on_paint(self, event):
+        if Config.DEBUG:
+            print("on_paint called from debug_view")
+        dc = wx.PaintDC(self.panel)
+        dc.Clear()
+        model = self.controller.model
+        upper_left_x = -model.offset_x
+        upper_left_y = -model.offset_y
+        if Config.DEBUG:
+            print(f"Debug View: Drawing bitmap at ({upper_left_x}, {upper_left_y})")
+        if self.bitmap:
+            dc.DrawBitmap(self.bitmap, upper_left_x, upper_left_y)
+
+        # Draw the pink dashed line around the pixel block if hovering
+        if self.hover_block:
+            x, y, block_w, block_h = self.hover_block
+            dc.SetPen(wx.Pen(wx.Colour(255, 20, 147), 1, wx.PENSTYLE_SHORT_DASH))  # Pink dashed line
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(x, y, block_w, block_h)
+
+            if Config.DEBUG:
+                print(f"Drawing hover block at: ({x}, {y}) with size ({block_w}, {block_h})")
+
+    def bind_events(self):
+        self.panel.Bind(wx.EVT_PAINT, self.on_paint)
+        self.panel.Bind(wx.EVT_MOTION, self.on_motion)
+
+    def on_motion(self, event):
+        if not self.event_controller.zooming:
+            x, y = event.GetPosition()
+            self.update_hover_block(x, y)
+            self.refresh()
 
     def set_hover_block(self, x, y, block_w, block_h):
         self.hover_block = (x, y, block_w, block_h)
@@ -35,15 +107,16 @@ class DebugView(wx.Frame):
             x, y, block_w, block_h = self.hover_block
             print(f"Hover block - X: {x}, Y: {y}, W: {block_w}, H: {block_h}")
 
-                        # Ensure the block is within image boundaries
-            if x < 0 or y < 0 or x + block_w > self.model.img_pil.width or y + block_h > self.model.img_pil.height:
+            # Ensure the block is within image boundaries
+            model = self.controller.model
+            if x < 0 or y < 0 or x + block_w > model.img_pil.width or y + block_h > model.img_pil.height:
                 print("Hover block is out of image boundaries")
                 self.status_bar.SetStatusText("Block out of image boundaries")
                 return
 
             try:
                 # Crop the block from the original image
-                block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
+                block_img = model.img_pil.crop((x, y, x + block_w, y + block_h))
                 block_np = np.array(block_img)
                 print(f"Block numpy array shape: {block_np.shape}")
 
@@ -65,50 +138,4 @@ class DebugView(wx.Frame):
 
             except Exception as e:
                 print(f"Error processing hover block: {e}")
-                self.status_bar.SetStatusText(f"Error: {e}")                        
-                        
-            
-            # Crop the block from the original image
-            block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
-            img_wx = wx.Image(block_img.size[0], block_img.size[1])
-            img_wx.SetData(block_img.convert("RGB").tobytes())
-            self.bitmap = wx.Bitmap(img_wx)
-
-    def on_paint(self, event):
-        dc = wx.PaintDC(self.panel)
-        dc.Clear()
-        panel_w, panel_h = self.panel.GetSize()
-
-        if self.bitmap:
-            # Calculate the position to center the bitmap on the panel
-            bitmap_w, bitmap_h = self.bitmap.GetSize()
-            x_pos = (panel_w - bitmap_w) // 2
-            y_pos = (panel_h - bitmap_h) // 2
-            dc.DrawBitmap(self.bitmap, x_pos, y_pos)
-
-            # If the pixel block size is larger than the thumbnail size, draw the best match thumbnail
-            if self.hover_block:
-                x, y, block_w, block_h = self.hover_block
-                if block_w > Config.THUMBNAIL_SIZE or block_h > Config.THUMBNAIL_SIZE:
-                    thumb_path = self.get_best_match_thumb(x, y, block_w, block_h)
-                    if thumb_path:
-                        thumb_img = Image.open(thumb_path).resize((block_w, block_h))
-                        thumb_wx = wx.Image(thumb_img.size[0], thumb_img.size[1])
-                        thumb_wx.SetData(thumb_img.convert("RGB").tobytes())
-                        thumb_bitmap = wx.Bitmap(thumb_wx)
-
-                        # Draw the thumbnail next to the block image
-                        thumb_x_pos = x_pos + bitmap_w + 10  # 10 pixels gap
-                        dc.DrawBitmap(thumb_bitmap, thumb_x_pos, y_pos)
-
-    def get_best_match_thumb(self, x, y, block_w, block_h):
-        # Calculate the average color of the pixel block
-        block_img = self.model.img_pil.crop((x, y, x + block_w, y + block_h))
-        block_np = np.array(block_img)
-        avg_color = block_np.mean(axis=(0, 1))
-
-        size=Config.THUMBNAIL_SIZE
-        # Find the best match thumbnail based on the average color
-        thumb_dir = os.path.join(os.path.dirname(self.model.image_path), f"_thumbs{size}x{size}")
-        best_match = ThumbnailGenerator.find_best_match_thumbnail(avg_color, thumb_dir)
-        return best_match
+                self.status_bar.SetStatusText(f"Error: {e}")

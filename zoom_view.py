@@ -40,27 +40,35 @@ class ZoomView(wx.Frame):
     def load_image(self, image_path):
         self.controller.load_image(image_path)
 
+
     def update_hover_block(self, x, y):
         # Determine scale and offsets
         s = self.controller.model.scale
         ox = self.controller.model.offset_x
         oy = self.controller.model.offset_y
+        initial_ox = self.controller.initial_offset_x
+        initial_oy = self.controller.initial_offset_y
 
         # Calculate the block dimensions based on the scale factor
         block_w = int(s)
         block_h = int(s)
 
         # Adjust the coordinates for the offsets
-        adjusted_x = x + ox
-        adjusted_y = y + oy
+        adjusted_x = x + initial_ox
+        adjusted_y = y + initial_oy
 
         # Find the pixel block the mouse is hovering over
         x_block = (adjusted_x // block_w) * block_w
         y_block = (adjusted_y // block_h) * block_h
 
+        if Config.DEBUG:
+            print(f"Hover Block Position: ({x_block}, {y_block}) with block size ({block_w}, {block_h})")
+            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x}, {adjusted_y}), Offsets: ({ox}, {oy}), Initial Offsets: ({initial_ox}, {initial_oy}), Scale: {s}")
+
         # Set the hover block with the calculated dimensions
         self.hover_block = (x_block, y_block, block_w, block_h)
-
-        # Notify the debug view if available
-        if self.controller.debug_view:
-            self.controller.debug_view.set_hover_block(x_block, y_block, block_w, block_h)
+        '''
+                # Notify the debug view if available
+                if self.controller.debug_view:
+                    self.controller.debug_view.set_hover_block(x_block, y_block, block_w, block_h)
+        '''
