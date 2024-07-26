@@ -5,7 +5,7 @@ from model import ImageModel
 from zoom_controller import ZoomController
 from zoom_view import ZoomView
 from birds_eye_view import BirdsEyeView
-from file_drop_target import FileDropTarget
+from debug_view import DebugView
 
 def main():
     app = wx.App()
@@ -22,8 +22,13 @@ def main():
     zoom_view.Show()
     birds_eye_view.Show()
 
+    if Config.DEBUG:
+        debug_view = DebugView(None, -1, 'Debug View Frame', model)
+        debug_view.Show()
+        debug_view.update_image()
+
     # Display the initial image before zooming
-    zoom_view.update_image(zoom_view.controller.model.get_original_image())  
+    zoom_view.update_image(model.get_original_image())  
     birds_eye_view.update_image()
     
     wx.lib.inspection.InspectionTool().Show()
