@@ -59,7 +59,8 @@ class DebugView(wx.Frame):
 
         if Config.DEBUG:
             print(f"Hover Block Position: ({x_block}, {y_block}) with block size ({block_w}, {block_h})")
-            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x}, {adjusted_y}), Offsets: ({ox}, {oy}), Scale: {s}")
+            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x}, {adjusted_y}), "\
+                  +f"Offsets: ({ox:.2f}, {oy:.2f}), Scale: {s:.2f}")
 
         # Set the hover block with the calculated dimensions
         self.hover_block = (x_block, y_block, block_w, block_h)

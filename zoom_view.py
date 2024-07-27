@@ -43,15 +43,15 @@ class ZoomView(wx.Frame):
 
     def update_hover_block(self, x, y):
         # Determine scale and offsets
-        s = self.controller.model.scale
+        scale = self.controller.model.scale
         ox = self.controller.model.offset_x
         oy = self.controller.model.offset_y
         initial_ox = self.controller.initial_offset_x
         initial_oy = self.controller.initial_offset_y
 
         # Calculate the block dimensions based on the scale factor
-        block_w = int(s)
-        block_h = int(s)
+        block_w = int(scale) # better round?
+        block_h = int(scale)
 
         # Adjust the coordinates for the offsets
         adjusted_x = x + initial_ox
@@ -63,7 +63,8 @@ class ZoomView(wx.Frame):
 
         if Config.DEBUG:
             print(f"Hover Block Position: ({x_block}, {y_block}) with block size ({block_w}, {block_h})")
-            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x}, {adjusted_y}), Offsets: ({ox}, {oy}), Initial Offsets: ({initial_ox}, {initial_oy}), Scale: {s}")
+            print(f"Mouse Position: ({x}, {y}), Adjusted Position: ({adjusted_x:.2f}, {adjusted_y:.2f}), " \
+                   +f"Offsets: ({ox:.2f}, {oy:.2f}), Initial Offsets: ({initial_ox:.2f}, {initial_oy:.2f}), Scale: {scale:.2f}")
 
         # Set the hover block with the calculated dimensions
         self.hover_block = (x_block, y_block, block_w, block_h)

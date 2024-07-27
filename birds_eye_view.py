@@ -65,7 +65,8 @@ class BirdsEyeView(wx.Frame):
             dc.SetBrush(wx.Brush("green", wx.TRANSPARENT))
             dc.SetPen(wx.Pen(wx.Colour(0, 255, 0), 2))
             if Config.DEBUG:
-                print(f"Birds-eye View: Drawing rectangle at ({zoom_rect_x}, {zoom_rect_y}) with size ({zoom_rect_width}, {zoom_rect_height})")
+                print(f"Birds-eye View: Drawing rectangle at ({zoom_rect_x:.2f}, {zoom_rect_y:.2f}) with size "\
+                      +f"({zoom_rect_width:.2f}, {zoom_rect_height:.2f})")
             dc.DrawRectangle(zoom_rect_x, zoom_rect_y, zoom_rect_width, zoom_rect_height)
 
     def on_size(self, event):
@@ -83,11 +84,13 @@ class BirdsEyeView(wx.Frame):
         new_offset_y = (mouse_y / self.resized_height * model.original_height * model.scale) - (self.GetSize().GetHeight() // 2)
         self.controller.update_view(new_offset_x, new_offset_y)
         # Ensure the zoom_view is updated correctly
+        w = self.controller.zoom_view.GetSize().GetWidth()
+        h = self.controller.zoom_view.GetSize().GetHeight()
         if Config.USE_CACHE:
-            cropped_img = model.get_cached_image(model.scale, new_offset_x, new_offset_y, self.controller.zoom_view.GetSize().GetWidth(), self.controller.zoom_view.GetSize().GetHeight())
+            cropped_img = model.get_cached_image(model.scale, new_offset_x, new_offset_y, w, h)
         else:
             resized_img, _, _ = model.resize_image(model.scale)
-            cropped_img = resized_img.crop((int(new_offset_x), int(new_offset_y), int(new_offset_x + self.controller.zoom_view.GetSize().GetWidth()), int(new_offset_y + self.controller.zoom_view.GetSize().GetHeight())))
+            cropped_img = resized_img.crop((int(new_offset_x), int(new_offset_y), int(new_offset_x + w), int(new_offset_y + h)))
         self.controller.zoom_view.update_image(cropped_img)
         self.panel.Refresh()
 
@@ -98,4 +101,10 @@ class BirdsEyeView(wx.Frame):
             pass
         except Exception as e:
             pass
+        try:
+            self.controller.debug_view.Close()
+        except wx._core.wxAssertionError:
+            pass
+        except Exception as e:
+            pass        
         self.Destroy()

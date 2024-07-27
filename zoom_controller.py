@@ -81,7 +81,7 @@ class ZoomController:
         end_time = time.time()  # Stop measuring time
         elapsed_time = end_time - start_time
         if Config.DEBUG:
-            print(f"Zoom level: {new_scale}, Time taken: {elapsed_time:.4f} seconds")
+            print(f"Zoom level: {new_scale:.2f}, Time taken: {elapsed_time:.4f} seconds")
 
     def update_view(self, offset_x, offset_y):
         if Config.DEBUG:
